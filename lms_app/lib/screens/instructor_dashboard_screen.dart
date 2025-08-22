@@ -13,7 +13,6 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
   final ApiService _apiService = ApiService();
   List<dynamic> _courses = [];
   bool _isLoading = true;
-  String? _instructorName;
 
   @override
   void initState() {
@@ -26,25 +25,15 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
       _isLoading = true;
     });
     try {
-      final sessionInfo = await _apiService.getSessionInfo();
-      if (sessionInfo['success']) {
-        _instructorName = sessionInfo['name'];
-      } else {
-        throw Exception('Could not fetch session info.');
-      }
-
       final allCourses = await _apiService.getCourses();
       setState(() {
-        _courses = allCourses
-            .where((course) => course['instructor'] == _instructorName)
-            .toList();
+        _courses = allCourses;
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to load data: ${e.toString()}')),
       );
-      // If session is invalid, redirect to login
-      if (e.toString().contains('session')) {
+      if (e.toString().contains('Unauthorized')) {
         _logout();
       }
     } finally {
@@ -71,7 +60,7 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Instructor Dashboard'),
+        title: Text('All Courses'),
         actions: [
           IconButton(
             icon: Icon(Icons.logout),
@@ -89,8 +78,8 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
                 itemBuilder: (context, index) {
                   final course = _courses[index];
                   final title = course['name'] ?? 'No Title';
-                  // The description does not exist in the data model from the backend.
-                  final description = 'No description available.';
+                  final instructor = course['instructor'] ?? 'Unknown Instructor';
+                  final description = 'Taught by: $instructor'; // Using subtitle for instructor name
 
                   return Card(
                     margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
