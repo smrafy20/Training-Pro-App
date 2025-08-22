@@ -65,6 +65,42 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
     }
   }
 
+  Future<void> _confirmAndDeleteCourse(String courseId, String courseName) async {
+    final bool? confirm = await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Delete Course'),
+          content: Text('Are you sure you want to delete "$courseName"?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm == true) {
+      try {
+        await _apiService.deleteCourse(courseId);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Course "$courseName" deleted successfully!')),
+        );
+        _loadData(); // Refresh the list
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete course: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -96,12 +132,22 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
                   final title = course['name'] ?? 'No Title';
                   final instructor = course['instructor'] ?? 'Unknown Instructor';
                   final description = 'Taught by: $instructor'; // Using subtitle for instructor name
+                  final courseId = course['id'];
+
+                  final bool canDelete = _userName != null && instructor == _userName;
 
                   return Card(
                     margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: ListTile(
                       title: Text(title),
                       subtitle: Text(description),
+                      trailing: canDelete
+                          ? IconButton(
+                              icon: Icon(Icons.delete, color: Colors.red),
+                              onPressed: () => _confirmAndDeleteCourse(courseId, title),
+                              tooltip: 'Delete Course',
+                            )
+                          : null,
                     ),
                   );
                 },

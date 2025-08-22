@@ -125,4 +125,20 @@ class ApiService {
       throw Exception('Failed to create course: ${response.body}');
     }
   }
+
+  Future<Map<String, dynamic>> deleteCourse(String courseId) async {
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/courses/$courseId'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        if (_cookie != null) 'cookie': _cookie!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to delete course: ${response.body}');
+    }
+  }
 }
