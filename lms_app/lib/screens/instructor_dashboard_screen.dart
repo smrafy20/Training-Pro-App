@@ -13,6 +13,7 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
   final ApiService _apiService = ApiService();
   List<dynamic> _courses = [];
   bool _isLoading = true;
+  String? _userName;
 
   @override
   void initState() {
@@ -25,6 +26,14 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
       _isLoading = true;
     });
     try {
+      // Fetch session info to get user's name
+      final sessionInfo = await _apiService.getSessionInfo();
+      if (sessionInfo['success']) {
+        setState(() {
+          _userName = sessionInfo['name'];
+        });
+      }
+
       final allCourses = await _apiService.getCourses();
       setState(() {
         _courses = allCourses;
@@ -62,6 +71,13 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
       appBar: AppBar(
         title: Text('All Courses'),
         actions: [
+          if (_userName != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Center(
+                child: Text('Hi, $_userName'),
+              ),
+            ),
           IconButton(
             icon: Icon(Icons.logout),
             onPressed: _logout,
