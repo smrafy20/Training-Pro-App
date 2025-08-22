@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lms_app/screens/create_course_screen.dart';
 import 'package:lms_app/screens/login_screen.dart';
+import 'package:lms_app/screens/course_materials_screen.dart';
 import 'package:lms_app/services/api_service.dart';
 
 class InstructorDashboardScreen extends StatefulWidget {
@@ -148,6 +149,16 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
                               tooltip: 'Delete Course',
                             )
                           : null,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => CourseMaterialsScreen(
+                              courseId: courseId,
+                              courseName: title,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   );
                 },

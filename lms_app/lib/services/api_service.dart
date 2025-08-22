@@ -141,4 +141,118 @@ class ApiService {
       throw Exception('Failed to delete course: ${response.body}');
     }
   }
+
+  Future<Map<String, dynamic>> uploadFile(
+      List<int> fileBytes, String filename, String fileType, String courseId) async {
+    final String endpoint;
+    switch (fileType) {
+      case 'video':
+        endpoint = 'upload';
+        break;
+      case 'pdf':
+        endpoint = 'upload_pdf';
+        break;
+      case 'docx':
+        endpoint = 'upload_docx';
+        break;
+      case 'audio':
+        endpoint = 'upload_audio';
+        break;
+      default:
+        throw Exception('Unsupported file type: $fileType');
+    }
+
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$_baseUrl/$endpoint'),
+    );
+
+    request.headers.addAll({
+      if (_cookie != null) 'cookie': _cookie!,
+    });
+
+    request.fields['courseId'] = courseId;
+    request.files.add(http.MultipartFile.fromBytes(
+      'file',
+      fileBytes,
+      filename: filename,
+    ));
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to upload $fileType: ${response.body}');
+    }
+  }
+
+  Future<List<dynamic>> getFiles(String fileType, String courseId) async {
+    final String endpoint;
+    switch (fileType) {
+      case 'video':
+        endpoint = 'videos';
+        break;
+      case 'pdf':
+        endpoint = 'pdfs';
+        break;
+      case 'docx':
+        endpoint = 'docx_files';
+        break;
+      case 'audio':
+        endpoint = 'audio_files';
+        break;
+      default:
+        throw Exception('Unsupported file type: $fileType');
+    }
+
+    final response = await http.get(
+      Uri.parse('$_baseUrl/$endpoint?courseId=$courseId'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        if (_cookie != null) 'cookie': _cookie!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load $fileType files: ${response.body}');
+    }
+  }
+
+  Future<Map<String, dynamic>> deleteFile(String fileType, String filename) async {
+    final String endpoint;
+    switch (fileType) {
+      case 'video':
+        endpoint = 'video';
+        break;
+      case 'pdf':
+        endpoint = 'pdf';
+        break;
+      case 'docx':
+        endpoint = 'docx';
+        break;
+      case 'audio':
+        endpoint = 'audio';
+        break;
+      default:
+        throw Exception('Unsupported file type: $fileType');
+    }
+
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/$endpoint/$filename'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        if (_cookie != null) 'cookie': _cookie!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to delete $fileType file: ${response.body}');
+    }
+  }
 }

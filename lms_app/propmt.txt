@@ -1,0 +1,47 @@
+"As a Flutter developer, my goal is to add features for instructors in my mobile app, which connects to a Flask backend. I have already implemented the login and registration screens in my Flutter app.
+
+My Flask backend has the following endpoints:
+
+GET /instructor_dashboard: Fetches the list of courses created by the currently logged-in instructor. It returns a JSON list of courses.
+
+POST /create_course: Allows an instructor to create a new course. It expects a JSON payload with title and description and returns a success message.
+
+Based on my existing Flutter application structure, generate the necessary Dart code to implement the following:
+
+Instructor Dashboard Screen (instructor_dashboard_screen.dart):
+
+Create a new stateful widget named InstructorDashboardScreen.
+
+It should have a clean UI with an AppBar titled "Instructor Dashboard" and a logout button.
+
+The main body should display a list of courses created by the instructor. Use a ListView.builder for this.
+
+Each item in the list should display the course title and description.
+
+Include a FloatingActionButton with an '+' icon to navigate to the course creation screen.
+
+Implement a method to fetch the instructor's courses from the /instructor_dashboard endpoint using the ApiService. This should be called in initState.
+
+Create Course Screen (create_course_screen.dart):
+
+Create a new stateful widget named CreateCourseScreen.
+
+The UI should contain an AppBar titled "Create New Course".
+
+Include two TextField widgets for the 'Course Title' and 'Course Description'.
+
+Add a 'Create Course' button. When pressed, it should take the data from the text fields and send it to the /create_course endpoint via a POST request.
+
+After a successful course creation, it should show a success message (e.g., using a SnackBar) and navigate back to the InstructorDashboardScreen.
+
+Update api_service.dart:
+
+Add a new method getInstructorCourses() to make a GET request to /instructor_dashboard.
+
+Add another method createCourse(String title, String description) to make a POST request to /create_course with the course title and description in the request body.
+
+Navigation:
+
+Update the navigation logic so that after a successful instructor login from login_screen.dart, the user is redirected to the InstructorDashboardScreen.
+
+Ensure the FloatingActionButton on the dashboard screen navigates to the CreateCourseScreen."
