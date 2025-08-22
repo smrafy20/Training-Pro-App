@@ -16,10 +16,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   String _selectedRole = 'student';
+  final ApiService _apiService = ApiService();
 
   Future<void> _register() async {
     if (_formKey.currentState!.validate()) {
-      final response = await ApiService.register(
+      final response = await _apiService.register(
         _fullNameController.text,
         _phoneController.text,
         _passwordController.text,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lms_app/screens/instructor_dashboard_screen.dart';
 import 'package:lms_app/screens/registration_screen.dart';
 import 'package:lms_app/services/api_service.dart';
 
@@ -14,21 +15,37 @@ class _LoginScreenState extends State<LoginScreen> {
   final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
   String _selectedRole = 'student';
+  final ApiService _apiService = ApiService();
 
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
-      final response = await ApiService.login(
-        _identifierController.text,
-        _passwordController.text,
-        _selectedRole,
-      );
+      try {
+        final response = await _apiService.login(
+          _identifierController.text,
+          _passwordController.text,
+          _selectedRole,
+        );
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(response['message'] ?? 'Logged in successfully')),
-      );
-
-      if (response['success']) {
-        // Navigate to home screen or another screen
+        if (response['success']) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Logged in successfully')),
+          );
+          if (_selectedRole == 'instructor') {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => InstructorDashboardScreen()),
+            );
+          } else {
+            // Navigate to student dashboard or home screen
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(response['message'] ?? 'Login failed')),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('An error occurred: $e')),
+        );
       }
     }
   }
