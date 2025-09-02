@@ -1,0 +1,9 @@
+Launching lib\main.dart on Windows in debug mode...
+CUSTOMBUILD : error : Couldn't resolve the package 'url_launcher' in 'package:url_launcher/url_launcher.dart'. [C:\Users\Shadman Rafy\Desktop\LMS App\lms_app\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/screens/course_materials_screen.dart(5,8): error GDA81338A: Not found: 'package:url_launcher/url_launcher.dart' [C:\Users\Shadman Rafy\Desktop\LMS App\lms_app\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/screens/course_materials_screen.dart(188,15): error G76A9B1F6: The method 'canLaunchUrl' isn't defined for the class '_CourseMaterialsScreenState'. [C:\Users\Shadman Rafy\Desktop\LMS App\lms_app\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/screens/course_materials_screen.dart(189,13): error G76A9B1F6: The method 'launchUrl' isn't defined for the class '_CourseMaterialsScreenState'. [C:\Users\Shadman Rafy\Desktop\LMS App\lms_app\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/screens/course_materials_screen.dart(212,50): error GD65BB2B6: The getter '_userName' isn't defined for the class '_CourseMaterialsScreenState'. [C:\Users\Shadman Rafy\Desktop\LMS App\lms_app\build\windows\x64\flutter\flutter_assemble.vcxproj]
+C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Microsoft\VC\v160\Microsoft.CppCommon.targets(241,5): error MSB8066: Custom build for 'C:\Users\Shadman Rafy\Desktop\LMS App\lms_app\build\windows\x64\CMakeFiles\58e4ef5876cf669e41d27fd4bac1b7cc\flutter_windows.dll.rule;C:\Users\Shadman Rafy\Desktop\LMS App\lms_app\build\windows\x64\CMakeFiles\b4ba771fca971aa128294ee2c5b337dd\flutter_assemble.rule' exited with code 1. [C:\Users\Shadman Rafy\Desktop\LMS App\lms_app\build\windows\x64\flutter\flutter_assemble.vcxproj]      
+Building Windows application...                                    17.0s
+Error: Build process failed.

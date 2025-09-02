@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lms_app/screens/instructor_dashboard_screen.dart';
 import 'package:lms_app/screens/registration_screen.dart';
+import 'package:lms_app/screens/student_dashboard_screen.dart';
 import 'package:lms_app/services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -28,14 +29,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (response['success']) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Logged in successfully')),
+            const SnackBar(content: Text('Logged in successfully')),
           );
           if (_selectedRole == 'instructor') {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (context) => InstructorDashboardScreen()),
             );
           } else {
-            // Navigate to student dashboard or home screen
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => const StudentDashboardScreen()),
+            );
           }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(

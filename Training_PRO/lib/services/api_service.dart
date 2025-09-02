@@ -10,10 +10,7 @@ class ApiService {
   }
   ApiService._internal();
 
-  // The backend server URL.
-  // For Android emulator, '10.0.2.2' points to the host machine's localhost.
-  // For iOS simulator, 'localhost' or '127.0.0.1' should work directly.
-  // For physical devices, this must be the local IP address of the machine running the Flask server.
+
   final String _baseUrl = 'https://training-pro-redis.vercel.app/api';
   String? _cookie;
 
