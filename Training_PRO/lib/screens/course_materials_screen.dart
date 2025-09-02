@@ -243,9 +243,39 @@ class _CourseMaterialsScreenState extends State<CourseMaterialsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final viewTab = DefaultTabController(
+      length: 4,
+      child: Column(
+        children: [
+          const TabBar(isScrollable: true, tabs: [
+            Tab(text: 'Videos'), Tab(text: 'PDFs'), Tab(text: 'DOCXs'), Tab(text: 'Audios'),
+          ]),
+          Expanded(
+            child: TabBarView(children: [
+              _buildMaterialList(_videos, 'video'),
+              _buildMaterialList(_pdfs, 'pdf'),
+              _buildMaterialList(_docxs, 'docx'),
+              _buildMaterialList(_audios, 'audio'),
+            ]),
+          ),
+        ],
+      ),
+    );
+
+    // If user is NOT an instructor, show only view materials (no upload tab at all)
+    if (!_isInstructor) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text('Materials for ${widget.courseName}'),
+        ),
+        body: viewTab,
+      );
+    }
+
+    // Instructor UI (upload + view)
     final uploadTab = Padding(
       padding: const EdgeInsets.all(16.0),
-      child: _isInstructor ? Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DropdownButtonFormField<String>(
@@ -269,25 +299,6 @@ class _CourseMaterialsScreenState extends State<CourseMaterialsScreen>
           _isUploading ? const Center(child: CircularProgressIndicator()) : ElevatedButton(
             onPressed: _uploadFile,
             child: const Text('Upload Material'),
-          ),
-        ],
-      ) : const Center(child: Text('Only instructors can upload materials.')),
-    );
-
-    final viewTab = DefaultTabController(
-      length: 4,
-      child: Column(
-        children: [
-          const TabBar(isScrollable: true, tabs: [
-            Tab(text: 'Videos'), Tab(text: 'PDFs'), Tab(text: 'DOCXs'), Tab(text: 'Audios'),
-          ]),
-          Expanded(
-            child: TabBarView(children: [
-              _buildMaterialList(_videos, 'video'),
-              _buildMaterialList(_pdfs, 'pdf'),
-              _buildMaterialList(_docxs, 'docx'),
-              _buildMaterialList(_audios, 'audio'),
-            ]),
           ),
         ],
       ),
