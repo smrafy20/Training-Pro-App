@@ -32,6 +32,7 @@ class _DocxViewerScreenState extends State<DocxViewerScreen> {
   double _lastSavedPercent = 0;
   bool _useFallback = false; // when embedded viewer not supported
   List<String> _fallbackPages = const [];
+  final ScrollController _fallbackScroll = ScrollController();
 
   @override
   void initState() {
@@ -190,6 +191,9 @@ class _DocxViewerScreenState extends State<DocxViewerScreen> {
 
   @override
   void dispose() {
+    if (_fallbackScroll.hasClients) {
+      // no special action
+    }
     _saveProgress();
     super.dispose();
   }
@@ -258,9 +262,11 @@ class _DocxViewerScreenState extends State<DocxViewerScreen> {
       color: Colors.white,
       padding: const EdgeInsets.all(16),
       child: Scrollbar(
+        controller: _fallbackScroll,
         child: SingleChildScrollView(
+          controller: _fallbackScroll,
           child: SelectableText(text, style: const TextStyle(fontSize: 16, height: 1.4)),
-        ),
+        )
       ),
     );
   }
@@ -283,32 +289,26 @@ class _DocxViewerScreenState extends State<DocxViewerScreen> {
           Text('Progress: ${_maxProgressPercent.toStringAsFixed(1)}%'),
           const SizedBox(height: 8),
           if (_useFallback)
-            Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.chevron_left),
-                  tooltip: 'Previous Page',
-                  onPressed: _currentPage > 1 ? () { setState(() { _currentPage--; _updateProgressFromPage(); }); } : null,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.chevron_right),
-                  tooltip: 'Next Page',
-                  onPressed: _currentPage < _totalPages ? () { setState(() { _currentPage++; _updateProgressFromPage(); }); } : null,
-                ),
-                Expanded(
-                  child: Slider(
-                    min: 1,
-                    max: _totalPages.toDouble().clamp(1, double.infinity),
-                    divisions: _totalPages > 1 ? _totalPages - 1 : 1,
-                    value: _currentPage.toDouble(),
-                    onChanged: (v) { setState(() { _currentPage = v.round(); _updateProgressFromPage(); }); },
-                  ),
-                ),
-              ],
-            ),
+            const SizedBox(height: 4),
           Wrap(
             spacing: 12,
             children: [
+              if (_useFallback)
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.chevron_left),
+                  label: const Text('Prev'),
+                  onPressed: _currentPage > 1 ? () {
+                    setState(() { _currentPage--; _fallbackScroll.jumpTo(0); _updateProgressFromPage(); });
+                  } : null,
+                ),
+              if (_useFallback)
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.chevron_right),
+                  label: const Text('Next'),
+                  onPressed: _currentPage < _totalPages ? () {
+                    setState(() { _currentPage++; _fallbackScroll.jumpTo(0); _updateProgressFromPage(); });
+                  } : null,
+                ),
               ElevatedButton.icon(
                 icon: const Icon(Icons.restore),
                 label: const Text('Reset Progress'),
