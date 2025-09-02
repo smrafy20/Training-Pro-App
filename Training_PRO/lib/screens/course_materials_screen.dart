@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lms_app/services/api_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'audio_player_screen.dart';
 
 class CourseMaterialsScreen extends StatefulWidget {
   final String courseId;
@@ -35,6 +36,7 @@ class _CourseMaterialsScreenState extends State<CourseMaterialsScreen>
   bool _isLoadingMaterials = true;
   String? _userName; // Current logged-in user's name
   String? _role; // Current logged-in user's role
+  final Map<String, double> _audioProgress = {}; // filename -> percent
 
   @override
   void initState() {
@@ -165,12 +167,39 @@ class _CourseMaterialsScreenState extends State<CourseMaterialsScreen>
         _docxs = docxs;
         _audios = audios;
       });
+
+      // Load audio progress for student users (non-instructors) after audios fetched
+      if (!_isInstructor && _userName != null) {
+        _loadAudioProgresses();
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to load materials: $e')),
       );
     } finally {
       if (mounted) setState(() => _isLoadingMaterials = false);
+    }
+  }
+
+  Future<void> _loadAudioProgresses() async {
+    // Avoid refetching if list empty
+    if (_audios.isEmpty) return;
+    final localUser = _userName;
+    if (localUser == null) return;
+    try {
+      // Fetch sequentially (audio list likely small). Could optimize with Future.wait.
+      for (final a in _audios) {
+        final filename = a['filename'];
+        if (filename is String) {
+          try {
+            final p = await _apiService.getAudioProgress(localUser, filename);
+            _audioProgress[filename] = p;
+          } catch (_) {}
+        }
+      }
+      if (mounted) setState(() {}); // trigger rebuild to show progress
+    } catch (_) {
+      // Silent fail — progress display just omitted
     }
   }
 
@@ -228,17 +257,61 @@ class _CourseMaterialsScreenState extends State<CourseMaterialsScreen>
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: ListTile(
             title: Text(filename),
-            subtitle: Text('Uploaded by: $instructorName'),
+            subtitle: fileType == 'audio'
+                ? Builder(
+                    builder: (context) {
+                      final prog = _audioProgress[filename];
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('Uploaded by: $instructorName'),
+                          if (prog != null)
+                            Text('Progress: ${prog.toStringAsFixed(1)}%'),
+                        ],
+                      );
+                    },
+                  )
+                : Text('Uploaded by: $instructorName'),
             trailing: canDelete ? IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
               onPressed: () => _deleteMaterial(fileType, filename),
               tooltip: 'Delete Material',
             ) : null,
-            onTap: () { if (url != null) _launchURL(url); },
+            onTap: () {
+              if (url == null) return;
+              if (fileType == 'audio') {
+                Navigator.of(context).push<double>(
+                  MaterialPageRoute(
+                    builder: (_) => AudioPlayerScreen(
+                      filename: filename,
+                      url: url,
+                    ),
+                  ),
+                ).then((percent) {
+                  if (percent != null && !_isInstructor) {
+                    setState(() { _audioProgress[filename] = percent; });
+                  } else if (!_isInstructor && percent == null) {
+                    // Fallback: re-fetch just this one if not present
+                    _refreshSingleAudioProgress(filename);
+                  }
+                });
+              } else {
+                _launchURL(url);
+              }
+            },
           ),
         );
       },
     );
+  }
+
+  Future<void> _refreshSingleAudioProgress(String filename) async {
+    final localUser = _userName; if (localUser == null) return;
+    try {
+      final p = await _apiService.getAudioProgress(localUser, filename);
+      if (mounted) setState(() { _audioProgress[filename] = p; });
+    } catch (_) {}
   }
 
   @override

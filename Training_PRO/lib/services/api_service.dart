@@ -252,4 +252,31 @@ class ApiService {
       throw Exception('Failed to delete $fileType file: ${response.body}');
     }
   }
+
+  // --- Audio Progress Tracking ---
+  Future<double> getAudioProgress(String studentName, String filename) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/progress_audio/$studentName/$filename'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        if (_cookie != null) 'cookie': _cookie!,
+      },
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return (data['progress'] as num?)?.toDouble() ?? 0.0;
+    }
+    return 0.0; // treat missing as 0
+  }
+
+  Future<void> setAudioProgress(String studentName, String filename, double progressPercent) async {
+    await http.post(
+      Uri.parse('$_baseUrl/progress_audio/$studentName/$filename'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        if (_cookie != null) 'cookie': _cookie!,
+      },
+      body: jsonEncode({'progress': progressPercent}),
+    );
+  }
 }
