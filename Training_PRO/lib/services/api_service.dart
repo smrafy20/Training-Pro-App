@@ -308,4 +308,33 @@ class ApiService {
       body: jsonEncode({'progress': progressPercent}),
     );
   }
+
+  // --- DOCX Progress Tracking (stores only maxProgressPercent like audio/video) ---
+  Future<double> getDocxProgress(String studentName, String filename) async {
+    final encodedFile = Uri.encodeComponent(filename);
+    final response = await http.get(
+      Uri.parse('$_baseUrl/progress_docx/$studentName/$encodedFile'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        if (_cookie != null) 'cookie': _cookie!,
+      },
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return (data['maxProgressPercent'] as num?)?.toDouble() ?? 0.0;
+    }
+    return 0.0;
+  }
+
+  Future<void> setDocxProgress(String studentName, String filename, double progressPercent) async {
+    final encodedFile = Uri.encodeComponent(filename);
+    await http.post(
+      Uri.parse('$_baseUrl/progress_docx/$studentName/$encodedFile'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        if (_cookie != null) 'cookie': _cookie!,
+      },
+      body: jsonEncode({'maxProgressPercent': progressPercent}),
+    );
+  }
 }

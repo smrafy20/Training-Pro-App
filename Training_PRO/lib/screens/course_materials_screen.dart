@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'audio_player_screen.dart';
 import 'video_player_screen.dart';
+import 'docx_viewer_screen.dart';
 
 class CourseMaterialsScreen extends StatefulWidget {
   final String courseId;
@@ -39,6 +40,7 @@ class _CourseMaterialsScreenState extends State<CourseMaterialsScreen>
   String? _role; // Current logged-in user's role
   final Map<String, double> _audioProgress = {}; // audio filename -> percent
   final Map<String, double> _videoProgress = {}; // video filename -> percent
+  final Map<String, double> _docxProgress = {}; // docx filename -> percent
 
   @override
   void initState() {
@@ -174,6 +176,7 @@ class _CourseMaterialsScreenState extends State<CourseMaterialsScreen>
       if (!_isInstructor && _userName != null) {
         _loadAudioProgresses();
         _loadVideoProgresses();
+  _loadDocxProgresses();
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -216,6 +219,23 @@ class _CourseMaterialsScreenState extends State<CourseMaterialsScreen>
           try {
             final p = await _apiService.getVideoProgress(localUser, filename);
             _videoProgress[filename] = p;
+          } catch (_) {}
+        }
+      }
+      if (mounted) setState(() {});
+    } catch (_) {}
+  }
+
+  Future<void> _loadDocxProgresses() async {
+    if (_docxs.isEmpty) return;
+    final localUser = _userName; if (localUser == null) return;
+    try {
+      for (final d in _docxs) {
+        final filename = d['filename'];
+        if (filename is String) {
+          try {
+            final p = await _apiService.getDocxProgress(localUser, filename);
+            _docxProgress[filename] = p;
           } catch (_) {}
         }
       }
@@ -307,7 +327,22 @@ class _CourseMaterialsScreenState extends State<CourseMaterialsScreen>
                           );
                         },
                       )
-                    : Text('Uploaded by: $instructorName'),
+                    : fileType == 'docx'
+                        ? Builder(
+                            builder: (context) {
+                              final prog = _docxProgress[filename];
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text('Uploaded by: $instructorName'),
+                                  if (prog != null)
+                                    Text('Progress: ${prog.toStringAsFixed(1)}%'),
+                                ],
+                              );
+                            },
+                          )
+                        : Text('Uploaded by: $instructorName'),
             trailing: canDelete ? IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
               onPressed: () => _deleteMaterial(fileType, filename),
@@ -347,6 +382,21 @@ class _CourseMaterialsScreenState extends State<CourseMaterialsScreen>
                     _refreshSingleVideoProgress(filename);
                   }
                 });
+              } else if (fileType == 'docx') {
+                Navigator.of(context).push<double>(
+                  MaterialPageRoute(
+                    builder: (_) => DocxViewerScreen(
+                      filename: filename,
+                      url: url,
+                    ),
+                  ),
+                ).then((percent) async {
+                  if (percent != null && !_isInstructor) {
+                    setState(() { _docxProgress[filename] = percent; });
+                  } else if (!_isInstructor && percent == null) {
+                    _refreshSingleDocxProgress(filename);
+                  }
+                });
               } else {
                 _launchURL(url);
               }
@@ -370,6 +420,14 @@ class _CourseMaterialsScreenState extends State<CourseMaterialsScreen>
     try {
       final p = await _apiService.getVideoProgress(localUser, filename);
       if (mounted) setState(() { _videoProgress[filename] = p; });
+    } catch (_) {}
+  }
+
+  Future<void> _refreshSingleDocxProgress(String filename) async {
+    final localUser = _userName; if (localUser == null) return;
+    try {
+      final p = await _apiService.getDocxProgress(localUser, filename);
+      if (mounted) setState(() { _docxProgress[filename] = p; });
     } catch (_) {}
   }
 

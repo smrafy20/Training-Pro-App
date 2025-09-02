@@ -41,6 +41,11 @@ dependencies:
   video_player: ^2.9.1
   # Windows desktop implementation for video_player
   video_player_win: ^2.3.5
+  # Document viewer for DOCX/PPTX/PDF (used for DOCX progress tracking UI)
+  flutter_document_viewer: ^0.1.0+1
+  # Fallback DOCX parsing (ZIP + XML) when embedded webview viewer not supported (e.g. Windows desktop)
+  archive: ^3.6.1
+  xml: ^6.5.0
 
 dev_dependencies:
   flutter_test:
