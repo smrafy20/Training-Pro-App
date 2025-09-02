@@ -279,4 +279,33 @@ class ApiService {
       body: jsonEncode({'progress': progressPercent}),
     );
   }
+
+  // --- Video Progress Tracking ---
+  Future<double> getVideoProgress(String studentName, String filename) async {
+    final encodedFile = Uri.encodeComponent(filename);
+    final response = await http.get(
+      Uri.parse('$_baseUrl/progress/$studentName/$encodedFile'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        if (_cookie != null) 'cookie': _cookie!,
+      },
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return (data['progress'] as num?)?.toDouble() ?? 0.0;
+    }
+    return 0.0;
+  }
+
+  Future<void> setVideoProgress(String studentName, String filename, double progressPercent) async {
+    final encodedFile = Uri.encodeComponent(filename);
+    await http.post(
+      Uri.parse('$_baseUrl/progress/$studentName/$encodedFile'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        if (_cookie != null) 'cookie': _cookie!,
+      },
+      body: jsonEncode({'progress': progressPercent}),
+    );
+  }
 }

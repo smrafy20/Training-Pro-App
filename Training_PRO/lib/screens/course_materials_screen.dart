@@ -3,6 +3,7 @@ import 'package:lms_app/services/api_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'audio_player_screen.dart';
+import 'video_player_screen.dart';
 
 class CourseMaterialsScreen extends StatefulWidget {
   final String courseId;
@@ -36,7 +37,8 @@ class _CourseMaterialsScreenState extends State<CourseMaterialsScreen>
   bool _isLoadingMaterials = true;
   String? _userName; // Current logged-in user's name
   String? _role; // Current logged-in user's role
-  final Map<String, double> _audioProgress = {}; // filename -> percent
+  final Map<String, double> _audioProgress = {}; // audio filename -> percent
+  final Map<String, double> _videoProgress = {}; // video filename -> percent
 
   @override
   void initState() {
@@ -156,7 +158,7 @@ class _CourseMaterialsScreenState extends State<CourseMaterialsScreen>
   Future<void> _loadMaterials() async {
     setState(() => _isLoadingMaterials = true);
     try {
-      final videos = await _apiService.getFiles('video', widget.courseId);
+  final videos = await _apiService.getFiles('video', widget.courseId);
       final pdfs = await _apiService.getFiles('pdf', widget.courseId);
       final docxs = await _apiService.getFiles('docx', widget.courseId);
       final audios = await _apiService.getFiles('audio', widget.courseId);
@@ -168,9 +170,10 @@ class _CourseMaterialsScreenState extends State<CourseMaterialsScreen>
         _audios = audios;
       });
 
-      // Load audio progress for student users (non-instructors) after audios fetched
+      // Load media progress for student users (non-instructors)
       if (!_isInstructor && _userName != null) {
         _loadAudioProgresses();
+        _loadVideoProgresses();
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -201,6 +204,23 @@ class _CourseMaterialsScreenState extends State<CourseMaterialsScreen>
     } catch (_) {
       // Silent fail — progress display just omitted
     }
+  }
+
+  Future<void> _loadVideoProgresses() async {
+    if (_videos.isEmpty) return;
+    final localUser = _userName; if (localUser == null) return;
+    try {
+      for (final v in _videos) {
+        final filename = v['filename'];
+        if (filename is String) {
+          try {
+            final p = await _apiService.getVideoProgress(localUser, filename);
+            _videoProgress[filename] = p;
+          } catch (_) {}
+        }
+      }
+      if (mounted) setState(() {});
+    } catch (_) {}
   }
 
   Future<void> _deleteMaterial(String fileType, String filename) async {
@@ -272,7 +292,22 @@ class _CourseMaterialsScreenState extends State<CourseMaterialsScreen>
                       );
                     },
                   )
-                : Text('Uploaded by: $instructorName'),
+                : fileType == 'video'
+                    ? Builder(
+                        builder: (context) {
+                          final prog = _videoProgress[filename];
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('Uploaded by: $instructorName'),
+                              if (prog != null)
+                                Text('Progress: ${prog.toStringAsFixed(1)}%'),
+                            ],
+                          );
+                        },
+                      )
+                    : Text('Uploaded by: $instructorName'),
             trailing: canDelete ? IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
               onPressed: () => _deleteMaterial(fileType, filename),
@@ -296,6 +331,22 @@ class _CourseMaterialsScreenState extends State<CourseMaterialsScreen>
                     _refreshSingleAudioProgress(filename);
                   }
                 });
+              } else if (fileType == 'video') {
+                Navigator.of(context).push<double>(
+                  MaterialPageRoute(
+                    builder: (_) => VideoPlayerScreen(
+                      filename: filename,
+                      url: url,
+                    ),
+                  ),
+                ).then((percent) async {
+                  if (percent != null && !_isInstructor) {
+                    setState(() { _videoProgress[filename] = percent; });
+                  } else if (!_isInstructor && percent == null) {
+                    // refresh single video progress
+                    _refreshSingleVideoProgress(filename);
+                  }
+                });
               } else {
                 _launchURL(url);
               }
@@ -311,6 +362,14 @@ class _CourseMaterialsScreenState extends State<CourseMaterialsScreen>
     try {
       final p = await _apiService.getAudioProgress(localUser, filename);
       if (mounted) setState(() { _audioProgress[filename] = p; });
+    } catch (_) {}
+  }
+
+  Future<void> _refreshSingleVideoProgress(String filename) async {
+    final localUser = _userName; if (localUser == null) return;
+    try {
+      final p = await _apiService.getVideoProgress(localUser, filename);
+      if (mounted) setState(() { _videoProgress[filename] = p; });
     } catch (_) {}
   }
 
